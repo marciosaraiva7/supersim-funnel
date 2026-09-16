@@ -44,6 +44,9 @@ function AdSlide({
           alt=""
           aria-hidden
           draggable={false}
+          loading="eager"
+          decoding="async"
+          fetchPriority={isActive ? 'high' : 'low'}
           className={cn(
             'size-full will-change-transform',
             fit === 'contain' ? 'object-contain p-1' : 'object-cover',

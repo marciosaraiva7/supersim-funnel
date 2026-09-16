@@ -41,6 +41,10 @@ export function ObjetivoPage() {
             src="/assets/caps-illustration.png"
             alt="Pessoas usando smartphone"
             className="relative z-10 w-full max-w-[340px]"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            draggable={false}
           />
         </div>
 

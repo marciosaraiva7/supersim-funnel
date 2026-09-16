@@ -29,7 +29,7 @@
   }
 
   html {
-    touch-action: manipulation;
+    touch-action: pan-x pan-y;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
@@ -38,6 +38,8 @@
   body,
   #root {
     min-height: 100%;
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
   }
 
   body {
@@ -46,6 +48,14 @@
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
+  }
+
+  img,
+  video,
+  canvas {
+    touch-action: pan-x pan-y;
+    -webkit-user-drag: none;
+    user-select: none;
   }
 
   /* Evita zoom automático ao focar inputs no iOS (font-size < 16px). */

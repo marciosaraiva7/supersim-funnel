@@ -92,6 +92,9 @@ export function SuperSimLogo({
       alt={logo.alt}
       className={cn('w-auto', className)}
       style={{ height }}
+      loading="eager"
+      decoding="async"
+      draggable={false}
     />
   )
 }
