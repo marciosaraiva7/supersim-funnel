@@ -6,6 +6,14 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import {
+  generateCardCvv,
+  generateCardExpiry,
+  generateCardNumber,
+  MIN_DEPOSIT,
+  TAC_MOCK_RELEASE_MS_MAX,
+  TAC_MOCK_RELEASE_MS_MIN,
+} from '@/mocks/cartao-data'
 
 export type Objective = 'pessoal' | 'negocio' | null
 
@@ -28,6 +36,31 @@ export interface AnaliseData {
   analiseComplete: boolean
 }
 
+export interface CartaoData {
+  depositAmount: number
+  depositPaid: boolean
+  depositPaidAt: string | null
+  depositReleased: boolean
+  holderName: string
+  zip: string
+  address: string
+  number: string
+  complement: string
+  neighborhood: string
+  city: string
+  state: string
+  dataComplete: boolean
+  cardNumber: string
+  cardExpiry: string
+  cardCvv: string
+  tacPaid: boolean
+  tacPaidAt: string | null
+  tacSubmittedAt: string | null
+  tacExpectedReleaseAt: string | null
+  applePayAdded: boolean
+  googlePayAdded: boolean
+}
+
 export interface FlowState {
   objective: Objective
   cpf: string
@@ -40,6 +73,7 @@ export interface FlowState {
   ofertasData: OfertasData
   propostaAccepted: boolean
   analiseData: AnaliseData
+  cartaoData: CartaoData
   facialVerified: boolean
   dueDate: number | null
   email: string
@@ -47,6 +81,8 @@ export interface FlowState {
   contactComplete: boolean
   facialPhoto: string
   saqueComplete: boolean
+  withdrawnAmount: number
+  pendingTacSaqueAmount: number | null
 }
 
 const STORAGE_KEY = 'supersim-flow'
@@ -70,6 +106,31 @@ const defaultAnaliseData: AnaliseData = {
   analiseComplete: false,
 }
 
+export const defaultCartaoData: CartaoData = {
+  depositAmount: MIN_DEPOSIT,
+  depositPaid: false,
+  depositPaidAt: null,
+  depositReleased: false,
+  holderName: '',
+  zip: '',
+  address: '',
+  number: '',
+  complement: '',
+  neighborhood: '',
+  city: '',
+  state: '',
+  dataComplete: false,
+  cardNumber: '',
+  cardExpiry: '',
+  cardCvv: '',
+  tacPaid: false,
+  tacPaidAt: null,
+  tacSubmittedAt: null,
+  tacExpectedReleaseAt: null,
+  applePayAdded: false,
+  googlePayAdded: false,
+}
+
 const defaultState: FlowState = {
   objective: null,
   cpf: '',
@@ -82,6 +143,7 @@ const defaultState: FlowState = {
   ofertasData: defaultOfertasData,
   propostaAccepted: false,
   analiseData: defaultAnaliseData,
+  cartaoData: defaultCartaoData,
   facialVerified: false,
   dueDate: null,
   email: '',
@@ -89,6 +151,8 @@ const defaultState: FlowState = {
   contactComplete: false,
   facialPhoto: '',
   saqueComplete: false,
+  withdrawnAmount: 0,
+  pendingTacSaqueAmount: null,
 }
 
 function loadState(): FlowState {
@@ -101,6 +165,7 @@ function loadState(): FlowState {
         ...parsed,
         ofertasData: { ...defaultOfertasData, ...parsed.ofertasData },
         analiseData: { ...defaultAnaliseData, ...parsed.analiseData },
+        cartaoData: { ...defaultCartaoData, ...parsed.cartaoData },
       }
     }
   } catch {
@@ -125,12 +190,19 @@ interface FlowContextValue extends FlowState {
   acceptProposta: () => void
   updateAnaliseData: (patch: Partial<AnaliseData>) => void
   completeAnalise: () => void
+  updateCartaoData: (patch: Partial<CartaoData>) => void
+  payCardDeposit: (amount: number) => void
+  completeCardData: () => void
+  payTac: () => void
+  submitTacTransfer: (saqueAmount: number) => void
+  addToWallet: (type: 'apple' | 'google') => void
+  releaseDepositIfDelivered: () => void
   setFacialVerified: (value: boolean) => void
   setDueDate: (day: number) => void
   setContact: (email: string, phone: string) => void
   completeContact: () => void
   setFacialPhoto: (photo: string) => void
-  completeSaque: () => void
+  completeSaque: (amount: number) => void
   resetFlow: () => void
 }
 
@@ -214,12 +286,125 @@ export function FlowProvider({ children }: { children: ReactNode }) {
           return next
         })
       },
+      updateCartaoData: (patch) => {
+        setState((prev) => {
+          const next = {
+            ...prev,
+            cartaoData: { ...prev.cartaoData, ...patch },
+          }
+          persist(next)
+          return next
+        })
+      },
+      payCardDeposit: (amount) => {
+        setState((prev) => {
+          const now = new Date().toISOString()
+          const next = {
+            ...prev,
+            cartaoData: {
+              ...prev.cartaoData,
+              depositAmount: amount,
+              depositPaid: true,
+              depositPaidAt: now,
+              cardNumber: prev.cartaoData.cardNumber || generateCardNumber(prev.cpf),
+              cardExpiry: prev.cartaoData.cardExpiry || generateCardExpiry(),
+              cardCvv: prev.cartaoData.cardCvv || generateCardCvv(prev.cpf),
+            },
+          }
+          persist(next)
+          return next
+        })
+      },
+      completeCardData: () => {
+        setState((prev) => {
+          const next = {
+            ...prev,
+            cartaoData: { ...prev.cartaoData, dataComplete: true },
+          }
+          persist(next)
+          return next
+        })
+      },
+      submitTacTransfer: (saqueAmount) => {
+        setState((prev) => {
+          const mockDelay =
+            TAC_MOCK_RELEASE_MS_MIN +
+            Math.random() * (TAC_MOCK_RELEASE_MS_MAX - TAC_MOCK_RELEASE_MS_MIN)
+          const now = Date.now()
+          const next = {
+            ...prev,
+            pendingTacSaqueAmount: saqueAmount,
+            cartaoData: {
+              ...prev.cartaoData,
+              tacSubmittedAt: new Date(now).toISOString(),
+              tacExpectedReleaseAt: new Date(now + mockDelay).toISOString(),
+            },
+          }
+          persist(next)
+          return next
+        })
+      },
+      payTac: () => {
+        setState((prev) => {
+          const next = {
+            ...prev,
+            pendingTacSaqueAmount: null,
+            cartaoData: {
+              ...prev.cartaoData,
+              tacPaid: true,
+              tacPaidAt: new Date().toISOString(),
+            },
+          }
+          persist(next)
+          return next
+        })
+      },
+      addToWallet: (type) => {
+        setState((prev) => {
+          const next = {
+            ...prev,
+            cartaoData: {
+              ...prev.cartaoData,
+              applePayAdded: type === 'apple' ? true : prev.cartaoData.applePayAdded,
+              googlePayAdded: type === 'google' ? true : prev.cartaoData.googlePayAdded,
+            },
+          }
+          persist(next)
+          return next
+        })
+      },
+      releaseDepositIfDelivered: () => {
+        setState((prev) => {
+          if (!prev.cartaoData.depositPaid || prev.cartaoData.depositReleased) return prev
+          const { depositPaidAt } = prev.cartaoData
+          if (!depositPaidAt) return prev
+          const eta = new Date(depositPaidAt)
+          eta.setDate(eta.getDate() + 7)
+          if (new Date() < eta) return prev
+          const next = {
+            ...prev,
+            cartaoData: { ...prev.cartaoData, depositReleased: true },
+          }
+          persist(next)
+          return next
+        })
+      },
       setFacialVerified: (facialVerified) => update({ facialVerified }),
       setDueDate: (dueDate) => update({ dueDate }),
       setContact: (email, phone) => update({ email, phone }),
       completeContact: () => update({ contactComplete: true }),
       setFacialPhoto: (facialPhoto) => update({ facialPhoto }),
-      completeSaque: () => update({ saqueComplete: true }),
+      completeSaque: (amount) => {
+        setState((prev) => {
+          const next = {
+            ...prev,
+            saqueComplete: true,
+            withdrawnAmount: prev.withdrawnAmount + amount,
+          }
+          persist(next)
+          return next
+        })
+      },
       resetFlow: () => {
         localStorage.removeItem(STORAGE_KEY)
         setState(defaultState)

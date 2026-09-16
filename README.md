@@ -45,11 +45,12 @@ npm run test:smoke
 | S11 Confirmação | `/confirmacao` |
 | S12 Criando | `/criando` |
 | S13 Conta | `/conta` |
+| S14 Cartão | `/cartao` |
 
 ## Fluxo completo
 
 ```
-/caps → /inicio → /verificacao → /ofertas → /proposta → /analise → /facial → /vencimento → /confirmacao → /criando → /conta
+/caps → /inicio → /verificacao → /ofertas → /proposta → /analise → /facial → /vencimento → /confirmacao → /criando → /conta → /cartao
 ```
 
 ## Fases

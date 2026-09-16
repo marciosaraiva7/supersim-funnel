@@ -242,7 +242,7 @@ export function AnalisePage() {
         <div className="relative mx-auto max-w-[420px] overflow-hidden rounded-[18px] border border-border bg-white shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
           <div className="bg-gradient-to-br from-primary to-primary-dark px-6 py-8 text-center text-white">
             <div className="mb-4 flex items-center justify-center gap-2">
-              <SuperSimLogo height={28} className="brightness-0 invert" />
+              <SuperSimLogo height={28} variant="onOrange" />
               <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold">Aprovado</span>
             </div>
             <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-white/20">

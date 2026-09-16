@@ -57,7 +57,7 @@ export function CriandoPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-gradient-to-br from-primary to-primary-dark text-white">
       <div className="flex flex-1 flex-col items-center justify-center px-6 pb-24 pt-12">
-        <SuperSimLogo height={36} className="mb-6 brightness-0 invert" />
+        <SuperSimLogo height={40} variant="onOrange" showTagline className="mb-6" />
         <h1 className="mb-1 text-center text-2xl font-extrabold">{displayName(nome)}</h1>
         <p className="mb-8 text-center text-sm text-white/80">
           {formatCurrency(loanAmount)} reservados para você

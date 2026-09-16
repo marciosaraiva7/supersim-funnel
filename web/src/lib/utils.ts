@@ -14,6 +14,15 @@ export function formatCurrency(value: number) {
   })
 }
 
+export function formatCurrencyCents(cents: number) {
+  return (cents / 100).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
 export function formatCpf(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 11)
   return digits
